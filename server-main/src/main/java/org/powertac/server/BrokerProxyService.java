@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.powertac.common.Broker;
 import org.powertac.common.TariffSpecification;
 import org.powertac.common.XMLMessageConverter;
+import org.powertac.common.config.ConfigurableValue;
 import org.powertac.common.interfaces.BrokerProxy;
 import org.powertac.common.interfaces.VisualizerProxy;
 import org.powertac.common.repo.BrokerRepo;
@@ -45,6 +46,9 @@ public class BrokerProxyService implements BrokerProxy
   @Autowired
   private VisualizerProxy visualizerProxyService;
 
+  @ConfigurableValue(valueType = "List", description = "all seeing brokers")
+  private List<String> spyBrokers = new ArrayList<>();
+
   // Deferred messages during initialization
   boolean deferredBroadcast = false;
   ArrayList<Object> deferredMessages;
@@ -71,6 +75,15 @@ public class BrokerProxyService implements BrokerProxy
       visualizerProxyService.forwardMessage(messageObject);
     
     localSendMessage(broker, messageObject);
+
+    //hijacking the communication and stealing all brokers messages to send them to a spy broker if so configured.
+    for (String brokerName: spyBrokers){
+      if(!brokerName.equals(broker.getUsername())){
+        Broker spy = brokerRepo.findByUsername(brokerName);
+        localSendMessage(spy, messageObject);
+      }
+
+    }
   }
 
   // break out the actual sending to prevent visualizer getting multiple
