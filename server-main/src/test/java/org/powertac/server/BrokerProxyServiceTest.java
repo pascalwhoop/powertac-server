@@ -18,6 +18,7 @@ import org.powertac.common.CustomerInfo;
 import org.powertac.common.XMLMessageConverter;
 import org.powertac.common.interfaces.BrokerProxy;
 import org.powertac.common.interfaces.VisualizerProxy;
+import org.powertac.common.repo.BrokerRepo;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -30,7 +31,8 @@ public class BrokerProxyServiceTest
 
   private TestBroker stdBroker; // no messages if not enabled
   private TestBroker wholesaleBroker; // can always send and receive messages
-  private TestBroker localBroker; 
+  private TestBroker localBroker;
+  private TestBroker spyBroker;
   private CustomerInfo message;
   
   private VisualizerProxy visualizer;
@@ -45,6 +47,7 @@ public class BrokerProxyServiceTest
     stdBroker = new TestBroker("standard_broker", false, false);
     wholesaleBroker = new TestBroker("wholesaler", true, true);
     localBroker = new TestBroker("local", true, false);
+    spyBroker =  new TestBroker("spyBroker", false, false);
     message = new CustomerInfo("t1", 33);
     
     template = mock(JmsTemplate.class);
@@ -54,7 +57,12 @@ public class BrokerProxyServiceTest
     visualizer = mock(VisualizerProxy.class);
     ReflectionTestUtils.setField(brokerProxy, "visualizerProxyService", visualizer);    
     converter = mock(XMLMessageConverter.class);
-    ReflectionTestUtils.setField(brokerProxy, "converter", converter);     
+    ReflectionTestUtils.setField(brokerProxy, "converter", converter);
+
+    ReflectionTestUtils.setField(brokerProxy,"spyBroker", "spyBroker");
+    BrokerRepo mockRepo = mock(BrokerRepo.class);
+    doReturn(spyBroker).when(mockRepo).findByUsername("spyBroker");
+    ReflectionTestUtils.setField(brokerProxy,"brokerRepo", mockRepo);
   }
 
   @After
@@ -111,6 +119,18 @@ public class BrokerProxyServiceTest
     brokerProxy.sendMessages(stdBroker, messageList);
     verify(template, times(messageList.size())).send(any(String.class),
                                                      any(MessageCreator.class));
+  }
+
+  @Test
+  public void testSpyBrokerMessage(){
+
+    brokerProxy.sendMessage(stdBroker, message);
+    verify(template, times(0)).send(any(String.class), any(MessageCreator.class));
+
+    spyBroker.setEnabled(true);
+    brokerProxy.sendMessage(stdBroker, message);
+    verify(template, times(1)).send(any(String.class),
+            any(MessageCreator.class));
   }
   
   @Test

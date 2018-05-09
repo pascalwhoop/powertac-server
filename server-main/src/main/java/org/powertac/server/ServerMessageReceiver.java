@@ -38,7 +38,7 @@ public class ServerMessageReceiver implements MessageListener {
   private VisualizerProxyService visualizerProxy;
 
   @ConfigurableValue(valueType = "String", description = "all seeing broker")
-  private String spyBroker = "";
+  private String spyBroker;
 
   @Autowired
   private BrokerRepo brokerRepo;
@@ -90,9 +90,8 @@ public class ServerMessageReceiver implements MessageListener {
 
     //hijack communication and get my hand on the incoming messages
     Broker broker = getBrokerForMessage(validXml);
-    assert broker != null;
     //all messages that are not from the spy brokers
-    if (!spyBroker.equals(broker.getUsername())){
+    if (broker != null && spyBroker != null && !spyBroker.equals(broker.getUsername())){
       //sending message to the all seeing eye
       brokerProxyService.localSendXmlMessage(brokerRepo.findByUsername(spyBroker), validXml);
     }
