@@ -47,7 +47,7 @@ public class BrokerProxyService implements BrokerProxy
   private VisualizerProxy visualizerProxyService;
 
   @ConfigurableValue(valueType = "String", description = "all seeing broker")
-  private String spyBroker;
+  private String spyBroker = "";
 
   // Deferred messages during initialization
   boolean deferredBroadcast = false;

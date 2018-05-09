@@ -38,7 +38,7 @@ public class ServerMessageReceiver implements MessageListener {
   private VisualizerProxyService visualizerProxy;
 
   @ConfigurableValue(valueType = "String", description = "all seeing broker")
-  private String spyBroker;
+  private String spyBroker = "";
 
   @Autowired
   private BrokerRepo brokerRepo;
