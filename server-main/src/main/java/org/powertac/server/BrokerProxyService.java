@@ -46,8 +46,8 @@ public class BrokerProxyService implements BrokerProxy
   @Autowired
   private VisualizerProxy visualizerProxyService;
 
-  @ConfigurableValue(valueType = "List", description = "all seeing brokers")
-  private List<String> spyBrokers = new ArrayList<>();
+  @ConfigurableValue(valueType = "String", description = "all seeing broker")
+  private String spyBroker;
 
   // Deferred messages during initialization
   boolean deferredBroadcast = false;
@@ -77,13 +77,10 @@ public class BrokerProxyService implements BrokerProxy
     localSendMessage(broker, messageObject);
 
     //hijacking the communication and stealing all brokers messages to send them to a spy broker if so configured.
-    for (String brokerName: spyBrokers){
-      if(!brokerName.equals(broker.getUsername())){
-        Broker spy = brokerRepo.findByUsername(brokerName);
+      if(!spyBroker.equals(broker.getUsername())){
+        Broker spy = brokerRepo.findByUsername(spyBroker);
         localSendMessage(spy, messageObject);
       }
-
-    }
   }
 
   // break out the actual sending to prevent visualizer getting multiple
@@ -108,20 +105,23 @@ public class BrokerProxyService implements BrokerProxy
     } 
     else {
       final String text = converter.toXML(messageObject);
-      log.debug("send " + messageObject.toString() + 
-               " to " + broker.getUsername());
-      log.debug("sending text: \n" + text);
-      final String queueName = broker.toQueueName();
-
-      template.send(queueName, new MessageCreator() {
-        @Override
-        public Message createMessage (Session session) throws JMSException
-        {
-          TextMessage message = session.createTextMessage(text);
-          return message;
-        }
-      });
+      log.debug("send " + messageObject.toString() +
+              " to " + broker.getUsername());
+      localSendXmlMessage(broker, text);
     }
+  }
+
+  protected void localSendXmlMessage(Broker broker,  String xmlMessage) {
+    log.debug("sending text: \n" + xmlMessage);
+    final String queueName = broker.toQueueName();
+
+    template.send(queueName, new MessageCreator() {
+      @Override
+      public Message createMessage (Session session) throws JMSException
+      {
+        return session.createTextMessage(xmlMessage);
+      }
+    });
   }
 
   /*
