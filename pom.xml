@@ -19,12 +19,12 @@
   <parent>
     <groupId>org.powertac</groupId>
     <artifactId>powertac-parent</artifactId>
-    <version>1.5.0</version>
+    <version>1.5.1-SNAPSHOT</version>
     <relativePath />
   </parent>
 
   <properties>
-    <powertac.version>1.5.0</powertac.version>
+    <powertac.version>1.5.1-SNAPSHOT</powertac.version>
   </properties>
 
   <!-- Common dependencies across all server modules -->

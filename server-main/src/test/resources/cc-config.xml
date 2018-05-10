@@ -22,11 +22,18 @@
     <constructor-arg value="org.powertac.common.interfaces.BrokerProxy" />
   </bean>
 
+  <bean id="brokerProxyService"
+        class="org.mockito.Mockito"
+        factory-method="mock">
+    <constructor-arg value="org.powertac.server.BrokerProxyService" />
+  </bean>
+
   <bean id="defaultBroker"
         class="org.mockito.Mockito"
         factory-method="mock">
     <constructor-arg value="org.powertac.common.interfaces.BootstrapDataCollector"/>
   </bean>
+
 
   <bean id="jmsManagementService"
         class="org.mockito.Mockito"

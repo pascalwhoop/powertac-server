@@ -47,7 +47,7 @@ public class BrokerProxyService implements BrokerProxy
   private VisualizerProxy visualizerProxyService;
 
   @ConfigurableValue(valueType = "String", description = "all seeing broker")
-  private String spyBroker = "";
+  private String spyBroker;
 
   // Deferred messages during initialization
   boolean deferredBroadcast = false;
@@ -77,7 +77,7 @@ public class BrokerProxyService implements BrokerProxy
     localSendMessage(broker, messageObject);
 
     //hijacking the communication and stealing all brokers messages to send them to a spy broker if so configured.
-      if(!spyBroker.equals(broker.getUsername())){
+      if(spyBroker != null && !spyBroker.equals(broker.getUsername())){
         Broker spy = brokerRepo.findByUsername(spyBroker);
         localSendMessage(spy, messageObject);
       }
