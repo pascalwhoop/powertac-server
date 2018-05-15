@@ -10,7 +10,6 @@ import java.util.List;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
-import javax.jms.TextMessage;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -27,7 +26,7 @@ import org.springframework.jms.core.MessageCreator;
 import org.springframework.stereotype.Service;
 
 @Service
-public class BrokerProxyService implements BrokerProxy
+public class BrokerProxyService implements BrokerProxy, Configurable
 {
   static private Logger log = LogManager.getLogger(BrokerProxyService.class);
 
@@ -46,8 +45,13 @@ public class BrokerProxyService implements BrokerProxy
   @Autowired
   private VisualizerProxy visualizerProxyService;
 
+
+  @Autowired
+  ServerPropertiesService sps;
+
   @ConfigurableValue(valueType = "String", description = "all seeing broker")
   private String spyBroker;
+
 
   // Deferred messages during initialization
   boolean deferredBroadcast = false;
@@ -77,10 +81,11 @@ public class BrokerProxyService implements BrokerProxy
     localSendMessage(broker, messageObject);
 
     //hijacking the communication and stealing all brokers messages to send them to a spy broker if so configured.
-      if(spyBroker != null && !spyBroker.equals(broker.getUsername())){
-        Broker spy = brokerRepo.findByUsername(spyBroker);
-        localSendMessage(spy, messageObject);
-      }
+    if(spyBroker != null && !spyBroker.equals(broker.getUsername()) && brokerRepo.findByUsername(spyBroker) != null){
+      log.info("forwarding message to spy");
+      Broker spy = brokerRepo.findByUsername(spyBroker);
+      localSendMessage(spy, messageObject);
+    }
   }
 
   // break out the actual sending to prevent visualizer getting multiple
@@ -230,5 +235,14 @@ public class BrokerProxyService implements BrokerProxy
     log.info("broadcasting " + deferredMessages.size() + " deferred messages");
     broadcastMessages(deferredMessages);
     deferredMessages.clear();
+  }
+
+  public void setSpyBroker(String spyBroker) {
+    this.spyBroker = spyBroker;
+  }
+
+  @Override
+  public void configure() {
+    sps.configureMe(this);
   }
 }

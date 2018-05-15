@@ -1,7 +1,5 @@
 package org.powertac.server;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ServerMessageReceiver implements MessageListener {
+public class ServerMessageReceiver implements MessageListener, Configurable {
   static private Logger log = LogManager.getLogger(ServerMessageReceiver.class);
 
   @Autowired
@@ -37,6 +35,9 @@ public class ServerMessageReceiver implements MessageListener {
   @Autowired
   private VisualizerProxyService visualizerProxy;
 
+  @Autowired
+  ServerPropertiesService sps;
+
   @ConfigurableValue(valueType = "String", description = "all seeing broker")
   private String spyBroker;
 
@@ -45,6 +46,14 @@ public class ServerMessageReceiver implements MessageListener {
 
   private Pattern brokerRegex = Pattern.compile("<broker>([A-Za-z0-9_ ]+)</broker>");
   private Pattern idRegex = Pattern.compile(" id=\"([0-9]+)\"");
+
+  ServerMessageReceiver(){
+  }
+
+  @Override
+  public void configure(){
+      sps.configureMe(this);
+  }
 
   @Override
   public void onMessage(Message message) {
@@ -91,7 +100,7 @@ public class ServerMessageReceiver implements MessageListener {
     //hijack communication and get my hand on the incoming messages
     Broker broker = getBrokerForMessage(validXml);
     //all messages that are not from the spy brokers
-    if (broker != null && spyBroker != null && !spyBroker.equals(broker.getUsername())){
+    if (broker != null && spyBroker != null && !spyBroker.equals(broker.getUsername()) && brokerRepo.findByUsername(spyBroker) != null){
       //sending message to the all seeing eye
       brokerProxyService.localSendXmlMessage(brokerRepo.findByUsername(spyBroker), validXml);
     }
@@ -141,5 +150,9 @@ public class ServerMessageReceiver implements MessageListener {
     }else{
       return null;
     }
+  }
+
+  public void setSpyBroker(String spyBroker) {
+    this.spyBroker = spyBroker;
   }
 }

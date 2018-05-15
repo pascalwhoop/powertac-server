@@ -15,6 +15,7 @@
  */
 package org.powertac.server;
 
+import org.apache.commons.configuration2.Initializable;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.joda.time.Instant;
@@ -336,6 +337,13 @@ public class CompetitionControlService
   // we are ready to start the clock.
   private boolean setup ()
   {
+    //configuring any service that wants to be configurable through the server.properties file
+    List<Configurable> configurables =
+            SpringApplicationContext.listBeansOfType(Configurable.class);
+    for (Configurable svc : configurables) {
+      svc.configure();
+    }
+
     // set up random sequence for new simulation run
     randomGen = randomSeedRepo.getRandomSeed("CompetitionControlService",
                                              competition.getId(),
